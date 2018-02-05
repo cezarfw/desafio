@@ -12,3 +12,6 @@ listen 80;
         proxy_cache_bypass $http_upgrade;
     }
 }
+
+/etc/nginx/sites-enabled/default
+
