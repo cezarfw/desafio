@@ -7,12 +7,7 @@
         state: latest
       become: yes
       with_items:
-        - php
-        - apache2
-        - libapache2-mod-php7.0
-        - php7.0-gd
-        - php-ssh2
-        - php7.0-mcrypt
-        - mysql-server-5.7
-        - python-mysqldb
-        - php7.0-mysql
+        - nodejs
+        - npm
+        - pm2
+        - nginx
