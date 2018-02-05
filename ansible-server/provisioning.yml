@@ -1,0 +1,15 @@
+---
+ - hosts: all
+   tasks:
+    - name: "Instalar PHP7"
+      apt:
+        name: php7.0
+      become: yes
+    - name: "Instalar apache2"
+      apt:
+        name: apache2
+      become: yes
+    - name: "Instalar mod-php"
+      apt:
+        name: libapache2-mod-php7.0
+      become: yes
