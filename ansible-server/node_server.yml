@@ -1,0 +1,42 @@
+---
+ - hosts: wordpress
+   handlers:
+    - name: restart aplicação_node
+      service:
+        name: 
+        state: restarted
+      become: yes
+
+
+   tasks:
+
+    - name: "Atualizar os pacotes do APT"
+      shell: apt update
+      become: yes
+
+    - name: "Remover a versão do python3"
+      apt:
+        name: python3
+        state: absent
+
+    - name: "Baixando via curl e instalando nodejs versão 8.x "
+      shell: 'curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -'
+      become: yes
+
+
+    - name: "Instalar dependências e serviços"
+      apt:
+        name: "{{ item }}"
+        state: latest
+      become: yes
+      with_items:
+        - python-minimal
+        - nodejs
+        - build-essential
+        - pm2
+        - npm
+
+    - name: 'Instala dependência express com NPM.'
+      npm:
+        name: express
+        state: present
