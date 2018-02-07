@@ -1,0 +1,20 @@
+#------------váriaveis---------#
+
+#. Arquivo com o log de acesso .#
+access_log="/home/majes850/access-logs/majestadebrindes.com";
+
+#. E-mail para notificação .#
+email="cezar.roggia@endurance.com"
+
+#-------------- código_função --------------#
+DATE=$(httpd fullstatus | grep "Current Time" | awk '{print $4}' | tr - /);
+DATA=$(grep "${DATE}" ${access_log});
+mail -s "Relatorio servidor `hostname` " $email << CORPO_MENSAGEM
+ 
+	Data: ${DATE}
+	Arquivo: ${access_log}
+	Quantidade de requisições: ${echo ${DATA} | wc -l}
+	Requisições: 
+	--------------------------------------------
+	${echo "${DATA}" | awk '{print $7,$9}' | sort | uniq -c | sort -nr}
+	-------------------------------------------
