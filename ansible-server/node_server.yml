@@ -1,6 +1,11 @@
 ---
  - hosts: node
    tasks:
+    - name: "Atualiza APT e instala dependencia python"
+      shell: 'apt update'
+      shell: 'apt install python-apt'
+      become: yes
+
 
 
     - name: "Atualiza repositório com nodejs e npm"
@@ -22,6 +27,7 @@
       npm:
         name: '{{ item }}'
         state: present
+        global: yes
       become: yes
       with_items:
         - express
