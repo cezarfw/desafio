@@ -1,0 +1,77 @@
+---
+ - hosts: node
+   tasks:
+
+    - name: 'Forçar uso do IPV4 no APT'
+      shell: "echo 'Acquire::ForceIPv4 \"true\";' >> /etc/apt/apt.conf.d/99force-ipv4"
+      become: yes
+
+    - name: "Atualizando lista de pacotes"
+      shell: "apt list upgradable"
+      become: yes
+
+    - name: "Atualiza APT"
+      shell: "apt update"
+      become: yes
+
+    - name: "Instala dependencia python-apt"
+      shell: "apt install python-apt"
+
+
+    - name: "Atualiza repositório com nodejs e npm"
+      shell: "curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -"
+      become: yes
+
+
+    - name: "Instala NODEJS e build-essential"
+      apt:
+        name: "{{ item }}"
+        state: latest
+      become: yes
+      with_items:
+        - nodejs
+
+    - name: 'Instala pm2 com NPM.'
+      npm:
+        name: '{{ item }}'
+        state: present
+        global: yes
+      become: yes
+      with_items:
+        - pm2
+
+    - name: 'Instalar NGINX'
+      apt:
+        name: nginx
+        state: latest
+        update_cache: true
+
+    - name: 'Instala expressjs'
+      shell: "npm install express --save"
+      args:
+        executable: /bin/bash
+
+    - name: 'Copia o app para o servidor remoto no diretório /opt/'
+      copy:
+        src: './app.js'
+        dest: '/opt/'
+      become: yes
+
+
+    - name: 'Copia o arquivo de configuração do proxy reverso'
+      copy:
+        src: "./default"
+        dest: "/etc/nginx/sites-enabled/default"
+      become: yes'
+
+      notify:
+       - restart nginx
+
+    - name: 'Executa o app utilizando PM2 e deixa em background'
+      shell: '( cd /opt ) &&  pm2 start app.js'
+      become: yes
+
+
+   handlers:
+    - name: restart nginx
+      service: name=nginx state=restarted
