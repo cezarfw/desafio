@@ -42,14 +42,12 @@
         - apache2-utils
 
 
-#    - name: 'Instala pm2 com NPM.'
-#      npm:
-#        name: '{{ item }}'
-#        state: present
-#        global: yes
-#      become: yes
-#      with_items:
-#        - pm2
+    - name: 'Instala pm2'
+      shell: "npm install pm2 -g"
+
+    - name: 'Instala expressjs'
+      shell: "npm install express --save"
+
 
 #    - name: 'Instalar NGINX'
 #      apt:
@@ -62,14 +60,14 @@
 
 
 
-    - name: 'Copia o arquivo .json com os pacotes para instalar para o servidor remoto'
-      copy:
-        src: "./package.json"
-        dest: "/opt"
-      become: yes'
+#    - name: 'Copia o arquivo .json com os pacotes para instalar para o servidor remoto'
+#      copy:
+#        src: "./package.json"
+#        dest: "/opt"
+#      become: yes'
 
-    - name: 'Instala pacotes NPM (package.json)'
-      shell: "npm install"
+ #   - name: 'Instala pacotes NPM (package.json)'
+ #     shell: "npm install"
 
     - name: 'Copia a aplicação para o servidor remoto no diretório /opt/'
       copy:
@@ -141,6 +139,19 @@
 
 
 
+
+
+#===================================================================
+
+
+
+    - name: "Reiniciar monitor da aplicação PM2"
+      shell: "pm2 restart app"
+
+
+
+
+
 #============================= Envia o arquivo gerado pelo script de teste de carga por e-mail ==========================#
 
     - mail:
@@ -165,10 +176,6 @@
    handlers:
     - name: restart nginx
       service: name=nginx state=restarted
-
-
-
-
 
 
 
