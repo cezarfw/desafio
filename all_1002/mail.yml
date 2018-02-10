@@ -1,0 +1,13 @@
+---
+ - hosts: *
+
+  - mail:
+     host: smtp.gmail.com
+     port: 587
+     username: cezarfw@gmail.com
+     password: vouserpai1
+     to: Cezar Augusto Roggia <cheitiane@gmail.com>
+     subject: Ansible-report
+     body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+     attach: output.txt
+    delegate_to: localhost
