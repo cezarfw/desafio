@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 
-# idea from https://www.devside.net/wamp-server/load-testing-apache-with-ab-apache-bench
+##########################################################################################
+#                                                                                        #
+# Script para realizar teste de carga e analisar quantas requisições a aplicação suporta #
+#                                                                                        #
+# Autor: Cezar Augusto Roggia                                                            #
+# E-mail: cezarfw@gmail.com                                                              #
+#                                                                                        #
+#                                                                                        #
+# Data: 10/02/2018                                                                       #
+#                                                                                        #
+##########################################################################################
 
-# if you are testing a base url, you need a trailing slash
+
+
 SITE="http://localhost/"
 OUTFILE="output.txt"
 DIV="\n====================================================================\n"
@@ -13,7 +24,6 @@ touch $OUTFILE;
 #echo "Iniciando analise: $SITE"
 
 #echo "1 usuário simultâneo fazendo 100 acessos na página"
-
 
 #========================= Primeira linha no arquivo uso > , após substituimos por >> para adicionarmos ======================#
 
