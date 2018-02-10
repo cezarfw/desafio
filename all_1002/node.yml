@@ -1,0 +1,175 @@
+---
+ - hosts: node
+   tasks:
+
+#=============================  Configuração do sistema ==========================#
+
+    - name: 'Forçar uso do IPV4 no APT'
+      shell: "echo 'Acquire::ForceIPv4 \"true\";' >> /etc/apt/apt.conf.d/99force-ipv4"
+      become: yes
+
+    - name: "Atualizando lista de pacotes"
+      shell: "apt list upgradable"
+      become: yes
+
+    - name: "Atualiza APT"
+      shell: "apt update"
+      become: yes
+
+#    - name: "Instala dependencia python-apt"
+#      shell: "apt install python-apt"
+
+
+#=============================  Atualizando repositório NODEJS  ==========================#
+
+
+    - name: "Atualiza repositório com nodejs e npm"
+      shell: "curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -"
+      become: yes
+
+#=============================  NODEJS/NPM  ==========================#
+
+
+
+    - name: "Instala nodejs"
+      apt:
+        name: "{{ item }}"
+        state: latest
+      become: yes
+      with_items:
+        - nodejs
+        - python-apt
+        - apache2-utils
+
+
+#    - name: 'Instala pm2 com NPM.'
+#      npm:
+#        name: '{{ item }}'
+#        state: present
+#        global: yes
+#      become: yes
+#      with_items:
+#        - pm2
+
+#    - name: 'Instalar NGINX'
+#      apt:
+#        name: nginx
+#        state: latest
+#        update_cache: true
+
+
+#=============================  Manipulando arquivos/diretórios - Instalando pacotes necessários (NGINX e módulos NPM com package.json  ==========================#
+
+
+
+    - name: 'Copia o arquivo .json com os pacotes para instalar para o servidor remoto'
+      copy:
+        src: "./package.json"
+        dest: "/opt"
+      become: yes'
+
+    - name: 'Instala pacotes NPM (package.json)'
+      shell: "npm install"
+
+    - name: 'Copia a aplicação para o servidor remoto no diretório /opt/'
+      copy:
+        src: './app.js'
+        dest: '/opt/'
+      become: yes
+
+    - name: 'Instalar NGINX'
+      apt:
+        name: nginx
+        state: latest
+        update_cache: true
+
+    - name: 'Copia o arquivo de configuração do proxy reverso'
+      copy:
+        src: "./default"
+        dest: "/etc/nginx/sites-enabled/default"
+      become: yes
+
+    - name: "Configurando o NGINX-STATUS para analise de requisições"
+      blockinfile:
+        path: /etc/nginx/sites-enabled/default
+        insertafter: "listen 80;"
+        content: |
+          location /nginx_status {
+          stub_status on;
+          access_log   on;
+          allow 192.168.0.10;
+          }
+
+
+#=============================  Reinicia Proxy Reverso ==========================#
+
+      notify:
+       - restart nginx
+
+
+
+#=============================  Instalando AB para teste de stress e avaliar quantas requisições suporta  ==========================#
+
+
+#    - name: "Instalar Apache Benchmarch"
+#      shell: "apt install apache2-utils"
+
+
+
+
+#=============================  Executa a aplicação ==========================#
+
+
+    - name: 'Executa o app utilizando PM2 e deixa em background'
+      shell: 'cd /opt ; pm2 start app.js'
+      become: yes
+
+
+
+#============================= Copia o script que gera o relatório para o host remoto no diretório /opt ==========================#
+
+    - name: "Copia o script para o host remoto"
+      copy:
+        src: "./ab.sh"
+        dest: "/opt"
+      become: yes
+
+
+#=============================  Executa o script criando o arquivo output.txt que será anexado no e-mail ==========================#
+
+    - script: /opt/ab.sh
+
+
+
+#============================= Envia o arquivo gerado pelo script de teste de carga por e-mail ==========================#
+
+    - mail:
+       host: smtp.gmail.com
+       port: 587
+       username: cezarfw@gmail.com
+       password: vouserpai1
+       to: Cezar Augusto Roggia <cheitiane@gmail.com>
+       subject: Analise de carga
+       body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+       attach: /opt/output.txt
+      delegate_to: localhost
+
+
+
+
+
+
+
+#=============================  HANDLERS ==========================#
+
+   handlers:
+    - name: restart nginx
+      service: name=nginx state=restarted
+
+
+
+
+
+
+
+
