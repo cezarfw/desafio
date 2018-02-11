@@ -1,17 +1,17 @@
 #!/bin/bash
 
 
-CONT_REQUISICOES=1000
-CONT_USUARIOS=1
+export CONT_REQUISICOES=1000
+export CONT_USUARIOS=1
 
 
 
 
 while [ $? != 24 ]
 do
-ab -n $CONT_REQUISICOES -c $CONT_USUARIOS http://127.0.0.1:3000/opt/app.js
-CONT_REQUISICOES=$(CONT_REQUISICOES+1000)
-CONT_USUARIOS=$(CONT_USUARIOS+10)
+ab -n $CONT_REQUISICOES -c $CONT_USUARIOS http://127.0.0.1:3000/opt/app.js > /dev/null
+CONT_REQUISICOES=$(( CONT_REQUISICOES+1000 ))
+CONT_USUARIOS=$(( CONT_USUARIOS+10 ))
 done
 
 echo "O teste de carga realizado mostrou que a aplicãção respondeu até $CONT_REQUISICOES requisições de $CONT_USUARIOS simultâneos."
