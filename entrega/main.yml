@@ -187,19 +187,3 @@
         job: "/bin/bash /opt/parser_log.sh > /dev/null"
 
 
-
-
-
-
-#============================= Envia o arquivo gerado pelo script de teste de carga por e-mail ==========================#
-
- #   - mail:
- #       host: smtp.gmail.com
- #       port: 587
- #       username: cezarfw@gmail.com
- #       password: vouserpai1
- #       to: Cezar Augusto Roggia <cheitiane@gmail.com>
- #       subject: Analise de carga
- #       body: 'System {{ ansible_hostname }} has been successfully provisioned.'
- #       attach: /opt/output.txt
- #     delegate_to: localhost
