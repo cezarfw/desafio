@@ -18,7 +18,7 @@
 
 
 
-#============================= ATUALIZANDO REPOSITÓRIO NODEJS  ==========================#
+#============================= ATUALIZA REPOSITÓRIO NODEJS  ==========================#
 
 
     - name: "Atualiza repositório com nodejs e npm"
@@ -43,30 +43,34 @@
 #============================= INSTALA PM2   ==========================#
 
 
-    - name: 'Instala pm2'
-      command: npm install pm2 -g
-
-
-
-#======================= COPIA O SCRIPT E INSTALA EXPRESSJS   ==========================#
-
-
-
-    - name: 'Copia o script express.sh para o servidor remoto'
+    - name: 'Copia o package.json para o servidor remoto'
       copy:
-        src: './express.sh'
+        src: './package.json'
         dest: '/opt/'
       become: yes
 
 
-    - name: "Executa script"
-      shell: /bin/bash /opt/express.sh
-      become: yes
+
+    - name: "Instala pacotes package.json (Express/PM2)"
+      npm:
+        path: /opt
+
+    - name: "Atualiza pacotes npm"
+      npm:
+        path: /opt
+        state: latest
+
+
+#============================= INSTALA WATCH   ==========================#
+
+
+    - name: 'Instala watch'
+      command: npm install watch
+
+
 
 
 #=============================  COPIA A APLICAÇÃO PARA O SERVIDOR REMOTO  ==========================#
-
-
 
     - name: 'Copia a aplicação nodejs (app.js) para o servidor remoto no diretório /opt/'
       copy:
@@ -77,7 +81,7 @@
 #============================= INSTALA PROXY REVERSO (NGINX)   ==========================#
 
 
-    - name: 'Instalar NGINX'
+    - name: 'Instala NGINX'
       apt:
         name: nginx
         state: latest
@@ -103,18 +107,13 @@
         mode: 0755
 
 
-
 #=============================  COPIA O ARQUIVO .CRT  ==========================#
-
-
 
     - name: 'Copia arquivo crt (Certificado)'
       copy:
         src: "./cert.crt"
         dest: "/etc/nginx/ssl"
       become: yes
-
-
 
 
 #=============================  COPIA O ARQUIVO .KEY  ==========================#
@@ -149,9 +148,10 @@
 #=============================  EXECUTA A APLICAÇÃO EM MODO CLUSTER COM O MÁXIMO DE CPU DISPONÍVEL ==========================#
 
 
-   # - name: 'Executa o app em processamente paralelo (cluster) baseado no número de processadores e deixa em background'
-    - command: /usr/bin/pm2 start app.js -i max app.js --watch
-      register: result
+    - name: 'Executa o app em processamente paralelo (cluster) baseado no número de processadores e deixa em background'
+      shell: pm2 start app.js -f -i max app.js --watch
+      args:
+        chdir: /opt/
       ignore_errors: True
 
 
@@ -165,16 +165,14 @@
 
 
 
+#============================= Copia o script que gera o relatório de requisições para o host remoto no diretório /opt ==========================#
 
-###      CÓDIGO EM DESENVOLVIMENTO      ############
-#============================= Copia o script que gera o relatório para o host remoto no diretório /opt ==========================#
+    - name: "Copia o script parserlog.sh para o host remoto /opt"
+      copy:
+        src: "./parserlog.sh"
+        dest: "/opt"
+      become: yes
 
- #   - name: "Copia o script para o host remoto"
- #     copy:
- #       src: "./ab.sh"
- #       dest: "/opt"
- #     become: yes
-#=============================  Executa o script criando o arquivo output.txt que será anexado no e-mail ==========================#
 
 
 #=============================  CRIA UMA CRON PARA EXECUTAR O SCRIPT PARSER_LOG.SH (/OPT) ==========================#
@@ -185,3 +183,4 @@
         minute: "0"
         hour: "2"
         job: "/bin/bash /opt/parser_log.sh > /dev/null"
+
