@@ -55,10 +55,20 @@
       npm:
         path: /opt
 
+
+    - name: 'Instala pm2'
+      command: npm install pm2 -g
+
+
+
     - name: "Atualiza pacotes npm"
       npm:
         path: /opt
         state: latest
+
+
+
+
 
 
 #============================= INSTALA WATCH   ==========================#
@@ -183,4 +193,3 @@
         minute: "0"
         hour: "2"
         job: "/bin/bash /opt/parser_log.sh > /dev/null"
-
