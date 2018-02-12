@@ -25,7 +25,7 @@
       shell: "curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -"
       become: yes
 
-#=============================  INSTALA NODEJS/NPM  ==========================#
+#=============================  INSTALA NODEJS/NPM/AB/SSMTP  ==========================#
 
 
     - name: "Instala nodejs"
@@ -37,7 +37,7 @@
         - nodejs
         - python-apt
         - apache2-utils
-
+        - ssmtp
 
 
 #============================= INSTALA PM2   ==========================#
@@ -48,19 +48,27 @@
 
 
 
-#============================= INSTALA EXPRESSJS   ==========================#
+#======================= COPIA O SCRIPT E INSTALA EXPRESSJS   ==========================#
 
 
-    - name: "Instala expressjs"
-      command: npm install express
 
+    - name: 'Copia o script express.sh para o servidor remoto'
+      copy:
+        src: './express.sh'
+        dest: '/opt/'
+      become: yes
+
+
+    - name: "Executa script"
+      shell: /bin/bash /opt/express.sh
+      become: yes
 
 
 #=============================  COPIA A APLICAÇÃO PARA O SERVIDOR REMOTO  ==========================#
 
 
 
-    - name: 'Copia a aplicação para o servidor remoto no diretório /opt/'
+    - name: 'Copia a aplicação nodejs (app.js) para o servidor remoto no diretório /opt/'
       copy:
         src: './app.js'
         dest: '/opt/'
@@ -87,52 +95,68 @@
       become: yes
 
 
+#============================= CRIA O DIRETÓRIO DOS CERTIFICADOS SSL   ==========================#
 
-#============================= HABILITA STATUS E LOG NGINX (ALLOW 192.168.0.10)   ==========================#
-
-
-    - name: "Configurando o NGINX-STATUS para analise de requisições"
-      blockinfile:
-        path: /etc/nginx/sites-enabled/default
-        insertafter: "listen 80;"
-        content: |
-          location /nginx_status {
-          stub_status on;
-          access_log   on;
-          allow 192.168.0.10;
-          }
+#    - name: "Cria o diretório para alocar os certificados SSL (HTTPS)"
+    - file:
+        path: /etc/nginx/ssl
+        state: directory
+        mode: 0755
 
 
 
-
-#=============================  Executa a aplicação ==========================#
-
-
-    - name: 'Executa o app utilizando PM2 e deixa em background'
-      command: pm2 start -f /opt/app.js
-      become: yes
+#=============================  COPIA O ARQUIVO .CRT  ==========================#
 
 
 
-#============================= Copia o script que gera o relatório para o host remoto no diretório /opt ==========================#
-
-    - name: "Copia o script para o host remoto"
+    - name: 'Copia arquivo crt (Certificado)'
       copy:
-        src: "./ab.sh"
-        dest: "/opt"
+        src: "./cert.crt"
+        dest: "/etc/nginx/ssl"
       become: yes
 
 
-#===================================================================
+
+
+#=============================  COPIA O ARQUIVO .KEY  ==========================#
 
 
 
-    - name: "Reiniciar monitor da aplicação PM2"
-      shell: "pm2 restart app"
+    - name: 'Copia arquivo key (Certificado)'
+      copy:
+        src: "./cert.key"
+        dest: "/etc/nginx/ssl"
+      become: yes
+
+
+
+#=============================  CONFIGURA SSMTP ===============================#
+
+    - name: "Configurando SSMTP para envio do relatório"
+      blockinfile:
+        path: /etc/ssmtp/revaliases
+        block: |
+             root:desafiolinx@gmail.com:smtp.gmail.com:587
+
+
+    - name: 'Copia arquivo key (Certificado)'
+        copy:
+          src: "./ssmtp.conf"
+          dest: "/etc/ssmtp/ssmtp.conf"
+        become: yes
+
+
+
+#=============================  EXECUTA A APLICAÇÃO EM MODO CLUSTER COM O MÁXIMO DE CPU DISPONÍVEL ==========================#
+
+
+    - name: 'Executa o app em processamente paralelo (cluster) baseado no número de processadores e deixa em background'
+      shell: cd /opt/ ; pm2 start app.js -i max app.js --watch
 
 
 
 #=============================  Reinicia Proxy Reverso ==========================#
+
 
     - service:
         name: nginx
@@ -142,20 +166,40 @@
 
 
 
+###      CÓDIGO EM DESENVOLVIMENTO      ############
+#============================= Copia o script que gera o relatório para o host remoto no diretório /opt ==========================#
+
+ #   - name: "Copia o script para o host remoto"
+ #     copy:
+ #       src: "./ab.sh"
+ #       dest: "/opt"
+ #     become: yes
+#=============================  Executa o script criando o arquivo output.txt que será anexado no e-mail ==========================#
+
+
+#=============================  CRIA UMA CRON PARA EXECUTAR O SCRIPT PARSER_LOG.SH (/OPT) ==========================#
+
+
+    - cron:
+        name: "Executa parser_log.sh"
+        minute: "0"
+        hour: "2"
+        job: "sh /opt/parser_log.sh > /dev/null"
+
+
+
+
+
 
 #============================= Envia o arquivo gerado pelo script de teste de carga por e-mail ==========================#
 
-    - mail:
-        host: smtp.gmail.com
-        port: 587
-        username: cezarfw@gmail.com
-        password: xxxxxxxx
-        to: Cezar Augusto Roggia <cheitiane@gmail.com>
-        subject: Analise de carga
-        body: 'Teste realizado com sucesso.'
-        attach: /opt/output.txt
-      delegate_to: localhost
-
-
-
-
+ #   - mail:
+ #       host: smtp.gmail.com
+ #       port: 587
+ #       username: cezarfw@gmail.com
+ #       password: vouserpai1
+ #       to: Cezar Augusto Roggia <cheitiane@gmail.com>
+ #       subject: Analise de carga
+ #       body: 'System {{ ansible_hostname }} has been successfully provisioned.'
+ #       attach: /opt/output.txt
+ #     delegate_to: localhost
