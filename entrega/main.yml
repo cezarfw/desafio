@@ -72,7 +72,6 @@
       copy:
         src: './app.js'
         dest: '/opt/'
-      become: yes
 
 
 #============================= INSTALA PROXY REVERSO (NGINX)   ==========================#
@@ -139,20 +138,21 @@
              root:desafiolinx@gmail.com:smtp.gmail.com:587
 
 
-    - name: 'Copia arquivo key (Certificado)'
-        copy:
-          src: "./ssmtp.conf"
-          dest: "/etc/ssmtp/ssmtp.conf"
-        become: yes
+    - name: 'Copia arquivo ssmtp.conf)'
+      copy:
+        src: "./ssmtp.conf"
+        dest: "/etc/ssmtp/ssmtp.conf"
+      become: yes
 
 
 
 #=============================  EXECUTA A APLICAÇÃO EM MODO CLUSTER COM O MÁXIMO DE CPU DISPONÍVEL ==========================#
 
 
-    - name: 'Executa o app em processamente paralelo (cluster) baseado no número de processadores e deixa em background'
-      shell: cd /opt/ ; pm2 start app.js -i max app.js --watch
-
+   # - name: 'Executa o app em processamente paralelo (cluster) baseado no número de processadores e deixa em background'
+    - command: /usr/bin/pm2 start app.js -i max app.js --watch
+      register: result
+      ignore_errors: True
 
 
 #=============================  Reinicia Proxy Reverso ==========================#
@@ -185,5 +185,3 @@
         minute: "0"
         hour: "2"
         job: "/bin/bash /opt/parser_log.sh > /dev/null"
-
-
