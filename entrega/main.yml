@@ -1,0 +1,161 @@
+---
+ - hosts: node
+   tasks:
+
+#=============================  CONFIGURAÇÃO DO SISTEM ==========================#
+
+    - name: 'Forçar uso do IPV4 no APT'
+      shell: "echo 'Acquire::ForceIPv4 \"true\";' >> /etc/apt/apt.conf.d/99force-ipv4"
+      become: yes
+
+    - name: "Atualizando lista de pacotes"
+      shell: "apt list upgradable"
+      become: yes
+
+    - name: "Atualiza APT"
+      shell: "apt update"
+      become: yes
+
+
+
+#============================= ATUALIZANDO REPOSITÓRIO NODEJS  ==========================#
+
+
+    - name: "Atualiza repositório com nodejs e npm"
+      shell: "curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -"
+      become: yes
+
+#=============================  INSTALA NODEJS/NPM  ==========================#
+
+
+    - name: "Instala nodejs"
+      apt:
+        name: "{{ item }}"
+        state: latest
+      become: yes
+      with_items:
+        - nodejs
+        - python-apt
+        - apache2-utils
+
+
+
+#============================= INSTALA PM2   ==========================#
+
+
+    - name: 'Instala pm2'
+      command: npm install pm2 -g
+
+
+
+#============================= INSTALA EXPRESSJS   ==========================#
+
+
+    - name: "Instala expressjs"
+      command: npm install express
+
+
+
+#=============================  COPIA A APLICAÇÃO PARA O SERVIDOR REMOTO  ==========================#
+
+
+
+    - name: 'Copia a aplicação para o servidor remoto no diretório /opt/'
+      copy:
+        src: './app.js'
+        dest: '/opt/'
+      become: yes
+
+
+#============================= INSTALA PROXY REVERSO (NGINX)   ==========================#
+
+
+    - name: 'Instalar NGINX'
+      apt:
+        name: nginx
+        state: latest
+        update_cache: true
+
+
+#============================= COPIA O ARQUIVO DE CONFIGURAÇÃO DO PROXY REVERSO PARA O SERVIDOR REMOTO   ==========================#
+
+
+    - name: 'Copia o arquivo de configuração do proxy reverso'
+      copy:
+        src: "./default"
+        dest: "/etc/nginx/sites-enabled/default"
+      become: yes
+
+
+
+#============================= HABILITA STATUS E LOG NGINX (ALLOW 192.168.0.10)   ==========================#
+
+
+    - name: "Configurando o NGINX-STATUS para analise de requisições"
+      blockinfile:
+        path: /etc/nginx/sites-enabled/default
+        insertafter: "listen 80;"
+        content: |
+          location /nginx_status {
+          stub_status on;
+          access_log   on;
+          allow 192.168.0.10;
+          }
+
+
+
+
+#=============================  Executa a aplicação ==========================#
+
+
+    - name: 'Executa o app utilizando PM2 e deixa em background'
+      command: pm2 start -f /opt/app.js
+      become: yes
+
+
+
+#============================= Copia o script que gera o relatório para o host remoto no diretório /opt ==========================#
+
+    - name: "Copia o script para o host remoto"
+      copy:
+        src: "./ab.sh"
+        dest: "/opt"
+      become: yes
+
+
+#===================================================================
+
+
+
+    - name: "Reiniciar monitor da aplicação PM2"
+      shell: "pm2 restart app"
+
+
+
+#=============================  Reinicia Proxy Reverso ==========================#
+
+    - service:
+        name: nginx
+        state: restarted
+      become: yes
+
+
+
+
+
+#============================= Envia o arquivo gerado pelo script de teste de carga por e-mail ==========================#
+
+    - mail:
+        host: smtp.gmail.com
+        port: 587
+        username: cezarfw@gmail.com
+        password: xxxxxxxx
+        to: Cezar Augusto Roggia <cheitiane@gmail.com>
+        subject: Analise de carga
+        body: 'Teste realizado com sucesso.'
+        attach: /opt/output.txt
+      delegate_to: localhost
+
+
+
+
