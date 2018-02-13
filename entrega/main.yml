@@ -192,4 +192,4 @@
         name: "Executa parser_log.sh"
         minute: "0"
         hour: "2"
-        job: "/bin/bash /opt/parser_log.sh > /dev/null"
+        job: "/bin/bash /opt/parserlog.sh > /dev/null"
