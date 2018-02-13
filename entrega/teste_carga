@@ -1,4 +1,18 @@
-#!bin/bash
+#!/bin/bash
+#
+#
+# Script para realizar teste de carga e analisar quantas requisições a aplicação suporta
+#
+#
+# Autor: Cezar Augusto Roggia
+# E-mail: cezarfw@gmail.com
+#
+#
+# Data: 10/02/2018
+#
+#
+#============================================================================================
+
 
 
 export CONT_REQUISICOES=10000
