@@ -40,7 +40,7 @@
         - ssmtp
 
 
-#============================= INSTALA PM2   ==========================#
+#============================= INSTALA PM2/EXPRESS   ==========================#
 
 
     - name: 'Copia o package.json para o servidor remoto'
@@ -147,7 +147,7 @@
              root:desafiolinx@gmail.com:smtp.gmail.com:587
 
 
-    - name: 'Copia arquivo ssmtp.conf)'
+    - name: 'Copia arquivo ssmtp.conf'
       copy:
         src: "./ssmtp.conf"
         dest: "/etc/ssmtp/ssmtp.conf"
